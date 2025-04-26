@@ -1,0 +1,11 @@
+torch
+torchvision
+wget
+unzip
+flask
+tensorflow
+scipy
+scikit-learn
+matplotlib
+pillow
+opencv-python
