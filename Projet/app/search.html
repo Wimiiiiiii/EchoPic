@@ -40,6 +40,7 @@
                                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-300 transition cursor-pointer"
                                      id="drop-zone">
                                     <input type="file" name="image" id="image-upload" accept="image/*" class="hidden">
+                                    <input type="hidden" name="query_name" id="query-name">
                                     <label for="image-upload" class="cursor-pointer">
                                         <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
                                         <p class="text-gray-600 text-lg">Glissez-déposez une image ou <span class="text-indigo-600">parcourir</span></p>
@@ -98,12 +99,53 @@
     </footer>
 
     <script type="module" src="static/js/script.js"></script>
-    <script type="module">
-        // Attendre que le DOM soit chargé
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Ajouter l'écouteur d'événement au bouton de déconnexion
-            document.getElementById('logout-btn').addEventListener('click', function() {
-                window.logout();
+            const fileInput = document.getElementById('image-upload');
+            const queryNameInput = document.getElementById('query-name');
+            const preview = document.getElementById('preview');
+            const dropZone = document.getElementById('drop-zone');
+
+            // Gestion du changement de fichier
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Récupérer le nom du fichier sans extension
+                    const fileName = file.name.replace(/\.[^/.]+$/, "");
+                    queryNameInput.value = fileName;
+                    
+                    // Afficher la prévisualisation
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.classList.remove('hidden');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Gestion du drag & drop
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropZone.classList.add('border-indigo-300');
+            });
+
+            dropZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                dropZone.classList.remove('border-indigo-300');
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropZone.classList.remove('border-indigo-300');
+                
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    fileInput.files = e.dataTransfer.files;
+                    // Déclencher l'événement change manuellement
+                    const event = new Event('change');
+                    fileInput.dispatchEvent(event);
+                }
             });
         });
     </script>

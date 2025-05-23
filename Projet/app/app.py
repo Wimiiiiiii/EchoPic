@@ -5,12 +5,17 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from werkzeug.utils import secure_filename
 import torch
-
+import pickle
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 app.config['LOAD_FOLDER'] = 'image.orig/'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 features_path = 'features/'
+
+# Create necessary directories if they don't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 
 def euclidean_distance(vec1, vec2):
     return np.sqrt(np.sum((vec1 - vec2) ** 2))
@@ -30,48 +35,18 @@ def getkVoisins(features_dict, query_name, k):
         raise ValueError(f"L'image requête '{query_name}' n'existe pas dans les features !")
 
     query_feature = features_dict[query_name]
-    distances = []
+    distances_name = []
 
     for name, feature_vector in features_dict.items():
         dist = euclidean_distance(query_feature, feature_vector)  # Distance euclidienne
-        distances.append((name, dist))  # Stocker le nom et la distance
+        distances_name.append((name, dist))  # Stocker le nom et la distance
 
     # Trier par distance croissante et récupérer les `k` plus proches
-    distances.sort(key=lambda x: x[1])
+    distances_name.sort(key=lambda x: x[1])
 
-    return distances[:k]  # Retourner les `k` plus proches voisins
+    return distances_name[:k][0]  # Retourner les `k` plus proches voisins
 
-def recherche(query_name, features_dict, image_path, top):
-    """
-    Recherche les `top` images les plus similaires à une image requête.
 
-    - `query_name` : Nom du fichier image requête (sans extension).
-    - `features_dict` : Dictionnaire {nom_fichier: feature_vector}.
-    - `image_dict` : Dictionnaire {nom_fichier: chemin_image}.
-    - `top` : Nombre d'images similaires à retourner.
-
-    Retourne :
-    - `nom_image_requete` : Nom de l’image requête.
-    - `nom_images_proches` : Liste des images similaires.
-    """
-    voisins = getkVoisins(features_dict, query_name, top)
-
-    # Affichage de l'image requête
-    plt.figure(figsize=(5, 5))
-    plt.imshow(Image.open(image_path+"/"+query_name+".jpg"), cmap='gray', interpolation='none')
-    plt.title("Image requête")
-
-    print(f"Image requête : {query_name}")
-
-    # Affichage des images proches
-    plt.figure(figsize=(25, 25))
-    plt.subplots_adjust(hspace=0.2, wspace=0.2)
-    for j in range(min(top, len(voisins))):
-        plt.subplot(top // 4, top // 5, j + 1)
-        plt.imshow(Image.open(image_path+"/"+voisins[j][0]+".jpg"), cmap='gray', interpolation='none')
-        plt.title(f"Image proche n°{j}")
-
-    return query_name, voisins
 
 def Compute_RP( top, nom_image_requete, images_proches):
     """
@@ -119,32 +94,33 @@ def Compute_RP( top, nom_image_requete, images_proches):
     print(f"✅ RP enregistré dans {RP_file}")
     return RP_file
 
+
 def Display_RP(fichier, model_name):
     """
-    Affiche la courbe Rappel-Précision (RP) à partir d'un fichier texte contenant les valeurs.
+    Génère et sauvegarde la courbe Rappel-Précision (RP) à partir d'un fichier texte.
 
-    - `fichier` : Chemin du fichier `.txt` contenant les valeurs RP.
+    Args:
+        fichier (str): Chemin du fichier contenant les valeurs RP
+        model_name (str): Nom du modèle utilisé
 
-    La courbe affiche :
-    - Axe X : Rappel (Recall)
-    - Axe Y : Précision (Precision)
+    Returns:
+        str: Chemin de l'image générée
     """
-
     # Charger les données depuis le fichier `.txt`
     x, y = [], []
 
     with open(fichier, 'r') as csvfile:
         for line in csvfile:
             values = line.strip().split()
-            if len(values) == 2:  # Vérifier que la ligne contient bien 2 valeurs
+            if len(values) == 2:
                 x.append(float(values[0]))  # Précision
                 y.append(float(values[1]))  # Rappel
 
-    # Convertir en tensor PyTorch (optionnel si on veut les manipuler après)
+    # Convertir en tensor PyTorch
     x_tensor = torch.tensor(x)
     y_tensor = torch.tensor(y)
 
-    # Affichage de la courbe RP
+    # Créer la figure
     plt.figure(figsize=(8, 6))
     plt.plot(y_tensor, x_tensor, 'C1', label=model_name)
     plt.xlabel('Rappel (Recall)')
@@ -152,51 +128,71 @@ def Display_RP(fichier, model_name):
     plt.title("Courbe Rappel/Précision (RP)")
     plt.legend()
     plt.grid(True)
-    plt.show()
+
+    # Sauvegarder la figure
+    rp_image_path = os.path.join('static', 'rp_curves', f'{os.path.splitext(os.path.basename(fichier))[0]}.png')
+    os.makedirs(os.path.dirname(rp_image_path), exist_ok=True)
+    plt.savefig(rp_image_path)
+    plt.close()
+
+    return rp_image_path
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
 @app.route('/search', methods=['POST', 'GET'])
 def search():
-    top_k = request.form.get('top_k', 10)
-    model_name = request.form.get('model', 'ResNet50')
+    if request.method == 'POST':
+        top_k = int(request.form.get('top_k', 10))
+        model_name = request.form.get('model', 'ResNet50')
+        query_name = request.form.get('query_name', '')
 
+        file = request.files[f'{query_name}']
+        if file.filename == '':
+            flash('Aucun fichier sélectionné', 'error')
+            return redirect(url_for('index'))
 
+        try:
+            with open(features_path + model_name + '.pkl', 'rb') as f:
+                loaded_features = pickle.load(f)
 
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
-    
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+            if file:
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                
+                # Recherche d'images similaires
+                similar_images = getkVoisins(loaded_features, query_name, top_k)
+                
+                # Calcul de la courbe RP
+                rp_file = Compute_RP(top_k, query_name, similar_images)
+                
+                # Générer l'image de la courbe RP
+                rp_image_path = Display_RP(rp_file, model_name)
+                
+                # Préparation des résultats pour l'affichage
+                results = []
+                for img_name, distance in similar_images:
+                    score = 1 / (1 + distance)  # Conversion de la distance en score (0-1)
+                    results.append({
+                        'path': img_name + '.jpg',
+                        'score': score
+                    })
 
-    import pickle
-    with open(features_path + model_name+'.pkl', 'rb') as f:  # 'rb' = lecture binaire
-        loaded_features = pickle.load(f)
+                return render_template('results.html', 
+                                     query_image=filename,
+                                     results=results,
+                                     model_name=model_name,
+                                     top_k=top_k,
+                                     rp_image=rp_image_path)
 
+        except Exception as e:
+            flash(f'Erreur lors de la recherche: {str(e)}', 'error')
+            return redirect(url_for('index'))
 
-    if file:
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        
-        #TODO: Intégrer ici le code de recherche d'images
-        nom_image_requete, nom_images_proches = recherche(filename, loaded_features, app.config['LOAD_FOLDER'], top=top_k)
-        
-        #RP result
-        rp_tensor = Compute_RP(top_k, nom_image_requete, nom_images_proches)
-
-        Display_RP(rp_tensor, model_name)
-      
-        return jsonify({
-            'message': 'Image uploaded successfully',
-            'results': [] 
-        })
-    
-    
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000) 
