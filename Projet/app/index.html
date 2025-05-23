@@ -7,184 +7,264 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="static/css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
 </head>
 <body class="bg-gray-100">
-    <div class="min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white rounded-xl shadow-md overflow-hidden p-8">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-indigo-600">EchoPic</h1>
-                <p class="mt-2 text-gray-600">Recherche d'images par similarité</p>
+    <!-- Barre de navigation -->
+    <nav class="bg-white shadow-lg fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="text-2xl font-bold text-indigo-600">EchoPic</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#about" class="text-gray-600 hover:text-indigo-600">À propos</a>
+                    <a href="#features" class="text-gray-600 hover:text-indigo-600">Fonctionnalités</a>
+                    <a href="#team" class="text-gray-600 hover:text-indigo-600">Équipe</a>
+                </div>
             </div>
-            
-            <!-- Conteneur principal d'authentification -->
-            <div id="auth-container" class="space-y-4">
-                <!-- Connexion Google -->
-                <button onclick="loginWithGoogle()" 
-                        class="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition">
-                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
-                    Connexion avec Google
-                </button>
-                
-                <!-- Séparateur -->
-                <div class="flex items-center my-4">
-                    <div class="flex-grow border-t border-gray-300"></div>
-                    <span class="mx-4 text-gray-500">ou</span>
-                    <div class="flex-grow border-t border-gray-300"></div>
+        </div>
+    </nav>
+
+    <!-- Section À propos -->
+    <section id="about" class="pt-24 pb-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    À propos d'EchoPic
+                </h2>
+                <p class="mt-4 text-lg text-gray-600">
+                    EchoPic est une application de recherche d'images par similarité qui utilise l'intelligence artificielle pour trouver des images similaires à partir d'une image de référence.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section d'authentification -->
+    <section id="auth-section" class="py-16 bg-gray-50">
+        <div class="max-w-md mx-auto px-4">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-indigo-600">EchoPic</h1>
+                    <p class="mt-2 text-gray-600">Recherche d'images par similarité</p>
                 </div>
                 
-                <!-- Formulaire  -->
-                <button onclick="showEmailAuth()"
-                        class="w-full flex justify-center items-center gap-2 bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-lg hover:bg-gray-50 transition">
-                    <i class="fas fa-envelope"></i>
-                    Continuer avec Email
-                </button>
-            </div>
-            
-            <!-- Formulaire de connexion par email (visible par défaut) -->
-            <div id="email-login-container" class="space-y-4">
-                <h2 class="text-xl font-semibold text-center text-gray-700">Connexion avec Email</h2>
+                <!-- Conteneur principal d'authentification -->
+                <div id="auth-container" class="space-y-4">
+                    <!-- Connexion Google -->
+                    <button onclick="loginWithGoogle()" 
+                            class="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition">
+                        <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                        Connexion avec Google
+                    </button>
+                    
+                    <!-- Séparateur -->
+                    <div class="flex items-center my-4">
+                        <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="mx-4 text-gray-500">ou</span>
+                        <div class="flex-grow border-t border-gray-300"></div>
+                    </div>
+                    
+                    <!-- Formulaire  -->
+                    <button onclick="showEmailAuth()"
+                            class="w-full flex justify-center items-center gap-2 bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-lg hover:bg-gray-50 transition">
+                        <i class="fas fa-envelope"></i>
+                        Continuer avec Email
+                    </button>
+                </div>
                 
-                <form id="loginForm" class="space-y-4">
-                    <div>
-                        <label for="login-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
-                        <input type="email" id="login-email" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+                <!-- Formulaire de connexion par email -->
+                <div id="email-login-container" class="hidden space-y-4">
+                    <h2 class="text-xl font-semibold text-center text-gray-700">Connexion avec Email</h2>
                     
-                    <div>
-                        <label for="login-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                        <input type="password" id="login-password" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    
-                    <div class="flex items-center justify-between">
-                        <button type="button" onclick="loginWithEmail()"
-                                class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Se connecter
-                        </button>
+                    <form id="loginForm" class="space-y-4">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                            <input type="email" id="login-email" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
                         
-                        <button type="button" onclick="showForgotPassword()"
-                                class="text-sm text-indigo-600 hover:text-indigo-500">
-                            Mot de passe oublié?
-                        </button>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                            <input type="password" id="login-password" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <button type="button" onclick="loginWithEmail()"
+                                    class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Se connecter
+                            </button>
+                            
+                            <button type="button" onclick="showForgotPassword()"
+                                    class="text-sm text-indigo-600 hover:text-indigo-500">
+                                Mot de passe oublié?
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600">Pas encore de compte? 
+                            <button onclick="showRegister()" class="text-indigo-600 hover:text-indigo-500">S'inscrire</button>
+                        </p>
                     </div>
-                </form>
+                    
+                    <button onclick="showAuthOptions()"
+                            class="w-full mt-4 text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-arrow-left"></i> Retour aux options
+                    </button>
+                </div>
                 
-                <div class="text-center">
-                    <p class="text-sm text-gray-600">Pas encore de compte? 
-                        <button onclick="showRegister()" class="text-indigo-600 hover:text-indigo-500">S'inscrire</button>
+                <!-- Formulaire d'inscription -->
+                <div id="register-container" class="hidden space-y-4">
+                    <h2 class="text-xl font-semibold text-center text-gray-700">Créer un compte</h2>
+                    
+                    <form id="registerForm" class="space-y-4">
+                        <div>
+                            <label for="register-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                            <input type="email" id="register-email" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label for="register-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                            <input type="password" id="register-password" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <p class="mt-1 text-xs text-gray-500">Minimum 6 caractères</p>
+                        </div>
+                        
+                        <div>
+                            <label for="register-confirm-password" class="block text-sm font-medium text-gray-700">Confirmer le mot de passe</label>
+                            <input type="password" id="register-confirm-password" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <button type="button" onclick="registerWithEmail()"
+                                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            S'inscrire
+                        </button>
+                    </form>
+                    
+                    <button onclick="showAuthOptions()"
+                            class="w-full mt-4 text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-arrow-left"></i> Retour aux options
+                    </button>
+                </div>
+                
+                <!-- Mot de passe oublié -->
+                <div id="forgot-password-container" class="hidden space-y-4">
+                    <h2 class="text-xl font-semibold text-center text-gray-700">Réinitialiser le mot de passe</h2>
+                    
+                    <form id="forgotPasswordForm" class="space-y-4">
+                        <div>
+                            <label for="reset-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                            <input type="email" id="reset-email" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <button type="button" onclick="sendPasswordResetEmail()"
+                                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Envoyer le lien de réinitialisation
+                        </button>
+                    </form>
+                    
+                    <button onclick="showEmailAuth()"
+                            class="w-full mt-4 text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-arrow-left"></i> Retour à la connexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Fonctionnalités -->
+    <section id="features" class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    Fonctionnalités
+                </h2>
+            </div>
+            <div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Fonctionnalité 1 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="text-indigo-600 text-2xl mb-4">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Recherche par Similarité</h3>
+                    <p class="text-gray-600">
+                        Trouvez des images similaires en utilisant différents modèles d'IA (ResNet50, MobileNet, VGG16, Vision Transformer).
                     </p>
                 </div>
-                
-                <button onclick="showAuthOptions()"
-                        class="w-full mt-4 text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left"></i> Retour aux options
-                </button>
-            </div>
-            
-            <!-- Formulaire d'inscription -->
-            <div id="register-container" class="hidden space-y-4">
-                <h2 class="text-xl font-semibold text-center text-gray-700">Créer un compte</h2>
-                
-                <form id="registerForm" class="space-y-4">
-                    <div>
-                        <label for="register-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
-                        <input type="email" id="register-email" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <!-- Fonctionnalité 2 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="text-indigo-600 text-2xl mb-4">
+                        <i class="fas fa-cloud-upload-alt"></i>
                     </div>
-                    
-                    <div>
-                        <label for="register-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                        <input type="password" id="register-password" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        <p class="mt-1 text-xs text-gray-500">Minimum 6 caractères</p>
-                    </div>
-                    
-                    <div>
-                        <label for="register-confirm-password" class="block text-sm font-medium text-gray-700">Confirmer le mot de passe</label>
-                        <input type="password" id="register-confirm-password" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    
-                    <button type="button" onclick="registerWithEmail()"
-                            class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        S'inscrire
-                    </button>
-                </form>
-                
-                <button onclick="showAuthOptions()"
-                        class="w-full mt-4 text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left"></i> Retour aux options
-                </button>
-            </div>
-            
-            <!-- Mot de passe oublié -->
-            <div id="forgot-password-container" class="hidden space-y-4">
-                <h2 class="text-xl font-semibold text-center text-gray-700">Réinitialiser le mot de passe</h2>
-                
-                <form id="forgotPasswordForm" class="space-y-4">
-                    <div>
-                        <label for="reset-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
-                        <input type="email" id="reset-email" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    
-                    <button type="button" onclick="sendPasswordResetEmail()"
-                            class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Envoyer le lien de réinitialisation
-                    </button>
-                </form>
-                
-                <button onclick="showEmailAuth()"
-                        class="w-full mt-4 text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left"></i> Retour à la connexion
-                </button>
-            </div>
-            
-            <!-- Interface de recherche (après connexion) -->
-            <div id="search-container" class="hidden mt-8">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Recherche d'images</h2>
-                    <button onclick="logout()" class="text-sm text-indigo-600 hover:text-indigo-500">
-                        Déconnexion
-                    </button>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Upload Facile</h3>
+                    <p class="text-gray-600">
+                        Glissez-déposez vos images ou utilisez le sélecteur de fichiers pour une expérience utilisateur fluide.
+                    </p>
                 </div>
-                
-                <form action="/search" method="post" enctype="multipart/form-data" class="space-y-4">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-300 transition cursor-pointer"
-                         id="drop-zone">
-                        <input type="file" name="image" id="image-upload" accept="image/*" class="hidden">
-                        <label for="image-upload" class="cursor-pointer">
-                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-600">Glissez-déposez une image ou <span class="text-indigo-600">parcourir</span></p>
-                            <p class="text-xs text-gray-400 mt-2">Formats supportés: JPG, PNG, WEBP</p>
-                        </label>
-                        <img id="preview" class="mt-4 mx-auto max-h-40 hidden rounded-lg">
+                <!-- Fonctionnalité 3 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="text-indigo-600 text-2xl mb-4">
+                        <i class="fas fa-cogs"></i>
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Modèle de recherche</label>
-                        <select name="model" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                            <option value="resnet">ResNet50</option>
-                            <option value="mobilenet">MobileNet</option>
-                            <option value="vit">Vision Transformer</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition flex justify-center items-center gap-2">
-                        <i class="fas fa-search"></i> Rechercher
-                    </button>
-                </form>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Personnalisation</h3>
+                    <p class="text-gray-600">
+                        Choisissez le nombre d'images similaires à afficher et le modèle d'IA qui correspond le mieux à vos besoins.
+                    </p>
+                </div>
             </div>
-            
-            <!-- Messages d'erreur/succès -->
-            <div id="auth-message" class="hidden mt-4 p-3 rounded-md"></div>
         </div>
-    </div>
-  
+    </section>
+
+    <!-- Section Équipe -->
+    <section id="team" class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    Notre Équipe
+                </h2>
+            </div>
+            <div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
+                <!-- Membre 1 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="text-center">
+                        <img class="mx-auto h-32 w-32 rounded-full" src="static/images/mounir.jpg" alt="Membre de l'équipe">
+                        <h3 class="mt-4 text-xl font-bold text-gray-900">Mamadou Mounir Barry</h3>
+                        <p class="text-indigo-600">Etudiant en cybersécurité - Master 1</p>
+                        <a href="https://www.linkedin.com/in/mamadou-mounir-barry-1615a6266/" class="btn btn-sm btn-outline-primary"><i class="fab fa-linkedin me-1"></i> Profil</a>
+
+                    </div>
+                </div>
+                <!-- Membre 2 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="text-center">
+                        <img class="mx-auto h-32 w-32 rounded-full" src="static/images/ouiam.jpg" alt="Membre de l'équipe">
+                        <h3 class="mt-4 text-xl font-bold text-gray-900">Ouiam Bouazzati</h3>
+                        <p class="text-indigo-600">Etudiante en cybersécurité - Master 1</p>
+                        <a href="https://www.linkedin.com/in/ouiam-bouazzati-9435a9266/" class="btn btn-sm btn-outline-primary"><i class="fab fa-linkedin me-1"></i> Profil</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Messages d'erreur/succès -->
+    <div id="auth-message" class="hidden fixed top-4 right-4 p-4 rounded-md shadow-lg z-50"></div>
+
+    <!-- Pied de page -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <p class="text-sm">
+                    © 2024 EchoPic. Tous droits réservés.
+                </p>
+            </div>
+        </div>
+    </footer>
+
     <script type="module" src="static/js/script.js"></script>
-
 </body>
-
 </html>

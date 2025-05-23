@@ -20,9 +20,17 @@ const auth = getAuth(app);
 // Écouteur d'état d'authentification
 onAuthStateChanged(auth, user => {
     if (user) {
-        showSearchInterface();
+        // Si nous sommes sur la page de recherche, on ne fait rien
+        if (!window.location.pathname.includes('search.html')) {
+            window.location.href = '/search.html';
+        }
     } else {
-        showAuthOptions();
+        // Si nous sommes sur la page de recherche, on redirige vers l'accueil
+        if (window.location.pathname.includes('search.html')) {
+            window.location.href = '/';
+        } else {
+            showAuthOptions();
+        }
     }
 });
 
@@ -35,10 +43,10 @@ window.showEmailAuth = function() {
 }
 
 window.showAuthOptions = function() {
-    document.getElementById('auth-container').classList.remove('hidden');
     document.getElementById('email-login-container').classList.add('hidden');
     document.getElementById('register-container').classList.add('hidden');
     document.getElementById('forgot-password-container').classList.add('hidden');
+    document.getElementById('auth-container').classList.remove('hidden');
 }
 
 window.showRegister = function() {
@@ -51,31 +59,17 @@ window.showForgotPassword = function() {
     document.getElementById('forgot-password-container').classList.remove('hidden');
 }
 
-window.showSearchInterface = function() {
-    hideAllContainers();
-    document.getElementById('search-container').classList.remove('hidden');
-}
-
-function hideAllContainers() {
-    const containers = [
-        'auth-container',
-        'email-login-container',
-        'register-container',
-        'forgot-password-container',
-        'search-container'
-    ];
-    containers.forEach(id => {
-        document.getElementById(id)?.classList.add('hidden');
-    });
-}
-
 // Fonctions d'authentification
 window.loginWithGoogle = function() {
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider)
-        .then(() => showMessage("Connexion réussie!", "success"))
+        .then(() => {
+            showMessage("Connexion réussie!", "success");
+            window.location.href = '/search.html';
+        })
         .catch(error => {
-            if (error.code !== 'auth/popup-closed-by-user') {
+            // Ne pas afficher de message d'erreur si l'utilisateur a simplement fermé la popup
+            if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
                 showMessage("Erreur: " + error.message, "error");
                 console.error(error);
             }
@@ -87,12 +81,13 @@ window.loginWithEmail = function() {
     const password = document.getElementById('login-password').value;
     
     if (!email || !password) {
-        showMessage("Veuillez remplir tous les champs", "error");
+        showMessage('Veuillez remplir tous les champs', 'error');
         return;
     }
 
     signInWithEmailAndPassword(auth, email, password)
         .then(() => showMessage("Connexion réussie!", "success"))
+        .then(() => window.location.href = '/search.html')
         .catch(error => {
             showMessage("Erreur: " + error.message, "error");
             console.error(error);
@@ -105,12 +100,12 @@ window.registerWithEmail = function() {
     const confirmPassword = document.getElementById('register-confirm-password').value;
     
     if (!email || !password || !confirmPassword) {
-        showMessage("Veuillez remplir tous les champs", "error");
+        showMessage('Veuillez remplir tous les champs', 'error');
         return;
     }
-
+    
     if (password !== confirmPassword) {
-        showMessage("Les mots de passe ne correspondent pas", "error");
+        showMessage('Les mots de passe ne correspondent pas', 'error');
         return;
     }
     
@@ -121,6 +116,7 @@ window.registerWithEmail = function() {
 
     createUserWithEmailAndPassword(auth, email, password)
         .then(() => showMessage("Inscription réussie! Vous êtes maintenant connecté.", "success"))
+        .then(() => window.location.href = '/search.html')
         .catch(error => {
             showMessage("Erreur: " + error.message, "error");
             console.error(error);
@@ -131,12 +127,15 @@ window.sendPasswordResetEmail = function() {
     const email = document.getElementById('reset-email').value;
     
     if (!email) {
-        showMessage("Veuillez entrer votre email", "error");
+        showMessage('Veuillez entrer votre adresse email', 'error');
         return;
     }
 
     sendPasswordResetEmail(auth, email)
         .then(() => showMessage("Email de réinitialisation envoyé!", "success"))
+        .then(() => setTimeout(() => {
+            showEmailAuth();
+        }, 1000))
         .catch(error => {
             showMessage("Erreur: " + error.message, "error");
             console.error(error);
@@ -146,8 +145,10 @@ window.sendPasswordResetEmail = function() {
 window.logout = function() {
     signOut(auth)
         .then(() => {
-            showAuthOptions();
             showMessage("Déconnexion réussie", "success");
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
         })
         .catch(error => {
             showMessage("Erreur lors de la déconnexion", "error");
@@ -156,15 +157,24 @@ window.logout = function() {
 }
 
 // Fonction utilitaire pour afficher les messages
-window.showMessage = function(message, type = 'success') {
-    const messageElement = document.getElementById('auth-message');
-    messageElement.textContent = message;
-    messageElement.className = `mt-4 p-3 rounded-md ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
-    messageElement.classList.remove('hidden');
+window.showMessage = function(message, type = 'info') {
+    const messageDiv = document.getElementById('message') || document.getElementById('auth-message');
+    if (!messageDiv) return;
     
+    messageDiv.textContent = message;
+    messageDiv.classList.remove('hidden');
+    
+    // Définir la couleur en fonction du type de message
+    messageDiv.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+        type === 'error' ? 'bg-red-500' : 
+        type === 'success' ? 'bg-green-500' : 
+        'bg-blue-500'
+    } text-white`;
+    
+    // Cacher le message après 3 secondes
     setTimeout(() => {
-        messageElement.classList.add('hidden');
-    }, 5000);
+        messageDiv.classList.add('hidden');
+    }, 3000);
 }
 
 // Gestion du drag & drop pour l'upload d'images
@@ -174,46 +184,78 @@ document.addEventListener('DOMContentLoaded', function() {
     const preview = document.getElementById('preview');
 
     if (dropZone && fileInput && preview) {
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-indigo-500');
+        // Empêcher le comportement par défaut du navigateur
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
         });
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-indigo-500');
+        // Mettre en évidence la zone de drop
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
         });
 
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-indigo-500');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
         });
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
+        // Gérer le drop
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        // Gérer la sélection de fichier
+        fileInput.addEventListener('change', handleFileSelect, false);
     }
 });
 
-function handleFile(file) {
-    if (!file.type.startsWith('image/')) {
-        showMessage('Veuillez sélectionner une image valide', 'error');
-        return;
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function highlight(e) {
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) {
+        dropZone.classList.add('border-indigo-500');
     }
+}
 
+function unhighlight(e) {
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) {
+        dropZone.classList.remove('border-indigo-500');
+    }
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+}
+
+function handleFileSelect(e) {
+    const files = e.target.files;
+    handleFiles(files);
+}
+
+function handleFiles(files) {
+    if (files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+            displayPreview(file);
+        } else {
+            showMessage('Veuillez sélectionner une image valide (JPG, PNG, WEBP)', 'error');
+        }
+    }
+}
+
+function displayPreview(file) {
     const preview = document.getElementById('preview');
-    const reader = new FileReader();
+    if (!preview) return;
 
-    reader.onload = (e) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
         preview.src = e.target.result;
         preview.classList.remove('hidden');
-    };
-
+    }
     reader.readAsDataURL(file);
 }
