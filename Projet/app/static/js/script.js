@@ -20,16 +20,17 @@ const auth = getAuth(app);
 // Écouteur d'état d'authentification
 onAuthStateChanged(auth, user => {
     if (user) {
-        // Si nous sommes sur la page de recherche, on ne fait rien
-        if (!window.location.pathname.includes('search.html')) {
-            window.location.href = '/search.html';
+        // Utilisateur connecté
+        if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+            window.location.href = '/search_interface'; // Redirige vers la page de recherche
         }
+        // Si déjà sur /search_interface ou /results.html, ne rien faire
     } else {
-        // Si nous sommes sur la page de recherche, on redirige vers l'accueil
-        if (window.location.pathname.includes('search.html')) {
-            window.location.href = '/';
-        } else {
-            showAuthOptions();
+        // Utilisateur non connecté
+        if (window.location.pathname.startsWith('/search_interface') || window.location.pathname.startsWith('/results')) {
+            window.location.href = '/'; // Redirige vers la page d'accueil/connexion
+        } else if (document.getElementById('auth-container')){
+            showAuthOptions(); // S'assure que les options d'auth sont visibles sur index.html
         }
     }
 });
@@ -64,8 +65,8 @@ window.loginWithGoogle = function() {
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider)
         .then(() => {
-            showMessage("Connexion réussie!", "success");
-            window.location.href = '/search.html';
+            showMessage("Connexion réussie! Redirection...", "success");
+            window.location.href = '/search_interface';
         })
         .catch(error => {
             // Ne pas afficher de message d'erreur si l'utilisateur a simplement fermé la popup
@@ -86,8 +87,10 @@ window.loginWithEmail = function() {
     }
 
     signInWithEmailAndPassword(auth, email, password)
-        .then(() => showMessage("Connexion réussie!", "success"))
-        .then(() => window.location.href = '/search.html')
+        .then(() => {
+            showMessage("Connexion réussie! Redirection...", "success");
+            window.location.href = '/search_interface';
+        })
         .catch(error => {
             showMessage("Erreur: " + error.message, "error");
             console.error(error);
@@ -115,8 +118,10 @@ window.registerWithEmail = function() {
     }
 
     createUserWithEmailAndPassword(auth, email, password)
-        .then(() => showMessage("Inscription réussie! Vous êtes maintenant connecté.", "success"))
-        .then(() => window.location.href = '/search.html')
+        .then(() => {
+            showMessage("Inscription réussie! Redirection...", "success");
+            window.location.href = '/search_interface';
+        })
         .catch(error => {
             showMessage("Erreur: " + error.message, "error");
             console.error(error);
@@ -145,7 +150,7 @@ window.sendPasswordResetEmail = function() {
 window.logout = function() {
     signOut(auth)
         .then(() => {
-            showMessage("Déconnexion réussie", "success");
+            showMessage("Déconnexion réussie. Redirection...", "success");
             setTimeout(() => {
                 window.location.href = '/';
             }, 1000);

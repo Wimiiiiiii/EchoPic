@@ -9,8 +9,8 @@ import pickle
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
-app.config['LOAD_FOLDER'] = 'image.orig/'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+db_path = 'image.orig/'
+app.config['MAX_CONTENT_LENGTH'] = 3 * 1024 * 1024  # 3MB max file size
 features_path = 'features/'
 
 # Create necessary directories if they don't exist
@@ -44,7 +44,7 @@ def getkVoisins(features_dict, query_name, k):
     # Trier par distance croissante et récupérer les `k` plus proches
     distances_name.sort(key=lambda x: x[1])
 
-    return distances_name[:k][0]  # Retourner les `k` plus proches voisins
+    return distances_name[:k]  # Retourner les `k` plus proches voisins
 
 
 
@@ -142,57 +142,88 @@ def Display_RP(fichier, model_name):
 def index():
     return render_template('index.html')
 
-@app.route('/search', methods=['POST', 'GET'])
+@app.route('/search_interface')
+def search_interface():
+    # Ici, vous pourriez ajouter une logique pour vérifier si l'utilisateur est connecté
+    # avant de rendre le template. Pour l'instant, on le rend directement.
+    return render_template('search.html')
+
+@app.route('/search', methods=['POST'])
 def search():
-    if request.method == 'POST':
-        top_k = int(request.form.get('top_k', 10))
-        model_name = request.form.get('model', 'ResNet50')
-        query_name = request.form.get('query_name', '')
+    # La méthode GET est maintenant gérée par /search_interface
+    # request.method == 'POST' est donc toujours vrai ici
+    top_k = int(request.form.get('top_k', 10)) # Assurez-vous que top_k est bien envoyé par le formulaire ou fournissez une valeur par défaut pertinente
+    model_name = request.form.get('model', 'ResNet50')
 
-        file = request.files[f'{query_name}']
-        if file.filename == '':
-            flash('Aucun fichier sélectionné', 'error')
-            return redirect(url_for('index'))
 
-        try:
-            with open(features_path + model_name + '.pkl', 'rb') as f:
-                loaded_features = pickle.load(f)
+    if 'image' not in request.files:
+        flash('Aucun champ de fichier image dans la requête.', 'error')
+        return redirect(url_for('search_interface'))
 
-            if file:
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-                
-                # Recherche d'images similaires
-                similar_images = getkVoisins(loaded_features, query_name, top_k)
-                
-                # Calcul de la courbe RP
-                rp_file = Compute_RP(top_k, query_name, similar_images)
-                
-                # Générer l'image de la courbe RP
-                rp_image_path = Display_RP(rp_file, model_name)
-                
-                # Préparation des résultats pour l'affichage
-                results = []
-                for img_name, distance in similar_images:
-                    score = 1 / (1 + distance)  # Conversion de la distance en score (0-1)
-                    results.append({
-                        'path': img_name + '.jpg',
-                        'score': score
-                    })
+    file = request.files['image']
 
-                return render_template('results.html', 
-                                     query_image=filename,
-                                     results=results,
-                                     model_name=model_name,
-                                     top_k=top_k,
-                                     rp_image=rp_image_path)
+    if not file or file.filename == '':
+        flash('Aucun fichier image sélectionné.', 'error')
+        return redirect(url_for('search_interface'))
 
-        except Exception as e:
-            flash(f'Erreur lors de la recherche: {str(e)}', 'error')
-            return redirect(url_for('index'))
+    filename_secure = secure_filename(file.filename)
+    # Utiliser le nom du fichier uploadé (sans extension) comme query_name pour getkVoisins
+    query_name_for_logic = os.path.splitext(filename_secure)[0]
 
-    return redirect(url_for('index'))
+    try:
+        features_file_path = os.path.join(features_path, model_name + '.pkl')
+        if not os.path.exists(features_file_path):
+            flash(f"Le fichier de caractéristiques pour le modèle {model_name} est introuvable.", 'error')
+            return redirect(url_for('search_interface'))
+            
+        with open(features_file_path, 'rb') as f:
+            loaded_features = pickle.load(f)
+
+        # Sauvegarder le fichier téléversé pour pouvoir l'afficher et potentiellement pour l'extraction de features si nécessaire
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename_secure)
+        file.save(filepath)
+        print(loaded_features)
+        # Recherche d'images similaires
+        # getkVoisins attend que query_name_for_logic soit une clé dans loaded_features
+        # Si l'image uploadée n'est pas dans le dataset précalculé, cela lèvera une ValueError ci-dessous.
+        similar_items = getkVoisins(loaded_features, query_name_for_logic, top_k)
+        
+        # `similar_items` est maintenant une liste de (nom_fichier_sans_ext, distance)
+        # Préparer la liste des noms de fichiers proches pour Compute_RP
+        similar_filenames_for_rp = [item[0] + '.jpg' for item in similar_items] # Assumant .jpg, à adapter si besoin
+
+        # Calcul de la courbe RP
+        # nom_image_requete pour Compute_RP est le nom de base du fichier uploadé
+        rp_file = Compute_RP(top_k, filename_secure, similar_filenames_for_rp)
+        
+        # Générer l'image de la courbe RP
+        rp_image_path = Display_RP(rp_file, model_name)
+        
+        # Préparation des résultats pour l'affichage
+        results = []
+        for img_name_no_ext, distance in similar_items:
+            score = 1.0 / (1.0 + distance) if distance is not None else 0 # Calcul du score, gère distance=None
+            results.append({
+                'path': os.path.join(db_path, img_name_no_ext + '.jpg'), # Assurez-vous que LOAD_FOLDER pointe vers les images du dataset
+                'score': score
+            })
+
+        return render_template('results.html', 
+                             query_image=os.path.join(app.config['UPLOAD_FOLDER'], filename_secure), # Chemin relatif pour l'affichage
+                             results=results,
+                             model_name=model_name,
+                             top_k=top_k,
+                             rp_image=rp_image_path)
+
+    except ValueError as ve: # Erreur spécifique si query_name_for_logic n'est pas dans loaded_features
+        flash(f"Erreur: L'image '{query_name_for_logic}' (ou ses caractéristiques) ne fait pas partie du jeu de données pré-calculé pour le modèle {model_name}. Détail: {str(ve)}", 'warning')
+        return redirect(url_for('search_interface'))
+    except Exception as e:
+        flash(f'Erreur lors de la recherche: {str(e)}', 'error')
+        return redirect(url_for('search_interface')) # Rediriger vers search_interface en cas d'erreur générale
+
+    # Ce return ne devrait pas être atteint si tout est logique au-dessus
+    return redirect(url_for('search_interface'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000) 
