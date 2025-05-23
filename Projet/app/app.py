@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+
 import os
-from werkzeug.security import generate_password_hash, check_password_hash
+
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)

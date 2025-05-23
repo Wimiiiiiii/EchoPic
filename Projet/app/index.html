@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoPic - Recherche Intelligente</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="static/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-xl shadow-md overflow-hidden p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-indigo-600">EchoPic</h1>
+                <p class="mt-2 text-gray-600">Recherche d'images par similarité</p>
+            </div>
+            
+            <!-- Conteneur principal d'authentification -->
+            <div id="auth-container" class="space-y-4">
+                <!-- Connexion Google -->
+                <button onclick="loginWithGoogle()" 
+                        class="w-full flex justify-center items-center gap-2 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition">
+                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                    Connexion avec Google
+                </button>
+                
+                <!-- Séparateur -->
+                <div class="flex items-center my-4">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="mx-4 text-gray-500">ou</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+                
+                <!-- Formulaire  -->
+                <button onclick="showEmailAuth()"
+                        class="w-full flex justify-center items-center gap-2 bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-lg hover:bg-gray-50 transition">
+                    <i class="fas fa-envelope"></i>
+                    Continuer avec Email
+                </button>
+            </div>
+            
+            <!-- Formulaire de connexion par email -->
+            <div id="email-login-container" class="hidden space-y-4">
+                <h2 class="text-xl font-semibold text-center text-gray-700">Connexion avec Email</h2>
+                
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                        <input type="email" id="login-email" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                        <input type="password" id="login-password" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <button type="button" onclick="loginWithEmail()"
+                                class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Se connecter
+                        </button>
+                        
+                        <button type="button" onclick="showForgotPassword()"
+                                class="text-sm text-indigo-600 hover:text-indigo-500">
+                            Mot de passe oublié?
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">Pas encore de compte? 
+                        <button onclick="showRegister()" class="text-indigo-600 hover:text-indigo-500">S'inscrire</button>
+                    </p>
+                </div>
+                
+                <button onclick="showAuthOptions()"
+                        class="w-full mt-4 text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left"></i> Retour aux options
+                </button>
+            </div>
+            
+            <!-- Formulaire d'inscription -->
+            <div id="register-container" class="hidden space-y-4">
+                <h2 class="text-xl font-semibold text-center text-gray-700">Créer un compte</h2>
+                
+                <form id="registerForm" class="space-y-4">
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                        <input type="email" id="register-email" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                        <input type="password" id="register-password" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="mt-1 text-xs text-gray-500">Minimum 6 caractères</p>
+                    </div>
+                    
+                    <div>
+                        <label for="register-confirm-password" class="block text-sm font-medium text-gray-700">Confirmer le mot de passe</label>
+                        <input type="password" id="register-confirm-password" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <button type="button" onclick="registerWithEmail()"
+                            class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        S'inscrire
+                    </button>
+                </form>
+                
+                <button onclick="showAuthOptions()"
+                        class="w-full mt-4 text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left"></i> Retour aux options
+                </button>
+            </div>
+            
+            <!-- Mot de passe oublié -->
+            <div id="forgot-password-container" class="hidden space-y-4">
+                <h2 class="text-xl font-semibold text-center text-gray-700">Réinitialiser le mot de passe</h2>
+                
+                <form id="forgotPasswordForm" class="space-y-4">
+                    <div>
+                        <label for="reset-email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                        <input type="email" id="reset-email" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <button type="button" onclick="sendPasswordResetEmail()"
+                            class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Envoyer le lien de réinitialisation
+                    </button>
+                </form>
+                
+                <button onclick="showEmailAuth()"
+                        class="w-full mt-4 text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left"></i> Retour à la connexion
+                </button>
+            </div>
+            
+            <!-- Interface de recherche (après connexion) -->
+            <div id="search-container" class="hidden mt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Recherche d'images</h2>
+                    <button onclick="logout()" class="text-sm text-indigo-600 hover:text-indigo-500">
+                        Déconnexion
+                    </button>
+                </div>
+                
+                <form action="/search" method="post" enctype="multipart/form-data" class="space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-300 transition cursor-pointer"
+                         id="drop-zone">
+                        <input type="file" name="image" id="image-upload" accept="image/*" class="hidden">
+                        <label for="image-upload" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600">Glissez-déposez une image ou <span class="text-indigo-600">parcourir</span></p>
+                            <p class="text-xs text-gray-400 mt-2">Formats supportés: JPG, PNG, WEBP</p>
+                        </label>
+                        <img id="preview" class="mt-4 mx-auto max-h-40 hidden rounded-lg">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Modèle de recherche</label>
+                        <select name="model" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="resnet">ResNet50</option>
+                            <option value="mobilenet">MobileNet</option>
+                            <option value="vit">Vision Transformer</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition flex justify-center items-center gap-2">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Messages d'erreur/succès -->
+            <div id="auth-message" class="hidden mt-4 p-3 rounded-md"></div>
+        </div>
+    </div>
+  
+    <script type="module">
+
+        // Importation des modules Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
+// Configuration Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyDLLUxHFTuN73015L2cR6m6pYtdVKICbp8",
+    authDomain: "echopic-b679d.firebaseapp.com",
+    projectId: "echopic-b679d",
+    storageBucket: "echopic-b679d.firebasestorage.app",
+    messagingSenderId: "1003205566040",
+    appId: "1:1003205566040:web:61b5cee410aa7dd0c3f42d",
+    measurementId: "G-X0F64N3GC7"
+  };
+
+// Initialisation Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Écouteur d'état d'authentification
+onAuthStateChanged(auth, user => {
+    if (user) {
+        showSearchInterface();
+    } else {
+        showAuthOptions();
+    }
+});
+
+// Fonctions d'affichage
+function showAuthOptions() {
+    hideAllContainers();
+    document.getElementById('auth-container').classList.remove('hidden');
+}
+
+function showEmailAuth() {
+    hideAllContainers();
+    document.getElementById('email-login-container').classList.remove('hidden');
+}
+
+function showRegister() {
+    hideAllContainers();
+    document.getElementById('register-container').classList.remove('hidden');
+}
+
+function showForgotPassword() {
+    hideAllContainers();
+    document.getElementById('forgot-password-container').classList.remove('hidden');
+}
+
+function showSearchInterface() {
+    hideAllContainers();
+    document.getElementById('search-container').classList.remove('hidden');
+}
+
+function hideAllContainers() {
+    const containers = [
+        'auth-container',
+        'email-login-container',
+        'register-container',
+        'forgot-password-container',
+        'search-container'
+    ];
+    containers.forEach(id => {
+        document.getElementById(id)?.classList.add('hidden');
+    });
+}
+
+// Fonctions d'authentification
+window.loginWithGoogle = function () {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider)
+        .then(() => showAuthMessage("Connexion réussie!", "success"))
+        .catch(error => {
+            showAuthMessage("Erreur: " + error.message, "error");
+            console.error(error);
+        });
+};
+
+window.loginWithEmail = function () {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+        showAuthMessage("Veuillez remplir tous les champs", "error");
+        return;
+    }
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then(() => showAuthMessage("Connexion réussie!", "success"))
+        .catch(error => {
+            showAuthMessage("Erreur: " + error.message, "error");
+            console.error(error);
+        });
+};
+
+window.registerWithEmail = function () {
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-confirm-password').value;
+
+    if (!email || !password || !confirmPassword) {
+        showAuthMessage("Veuillez remplir tous les champs", "error");
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showAuthMessage("Les mots de passe ne correspondent pas", "error");
+        return;
+    }
+
+    if (password.length < 6) {
+        showAuthMessage("Le mot de passe doit contenir au moins 6 caractères", "error");
+        return;
+    }
+
+    createUserWithEmailAndPassword(auth, email, password)
+        .then(() => showAuthMessage("Inscription réussie! Vous êtes maintenant connecté.", "success"))
+        .catch(error => {
+            showAuthMessage("Erreur: " + error.message, "error");
+            console.error(error);
+        });
+};
+
+window.sendPasswordResetEmail = function () {
+    const email = document.getElementById('reset-email').value;
+
+    if (!email) {
+        showAuthMessage("Veuillez entrer votre email", "error");
+        return;
+    }
+
+    sendPasswordResetEmail(auth, email)
+        .then(() => showAuthMessage("Email de réinitialisation envoyé!", "success"))
+        .catch(error => {
+            showAuthMessage("Erreur: " + error.message, "error");
+            console.error(error);
+        });
+};
+
+window.logout = function () {
+    signOut(auth)
+        .then(() => {
+            showAuthOptions();
+            showAuthMessage("Déconnexion réussie", "success");
+        })
+        .catch(error => {
+            showAuthMessage("Erreur lors de la déconnexion", "error");
+            console.error(error);
+        });
+};
+
+// Gestion des messages
+function showAuthMessage(message, type) {
+    const messageDiv = document.getElementById('auth-message');
+    messageDiv.textContent = message;
+    messageDiv.className = `mt-4 p-3 rounded-md ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+    messageDiv.classList.remove('hidden');
+
+    setTimeout(() => {
+        messageDiv.classList.add('hidden');
+    }, 5000);
+}
+
+// Upload image + drag & drop
+document.getElementById('image-upload')?.addEventListener('change', function (e) {
+    const preview = document.getElementById('preview');
+    const file = e.target.files[0];
+
+    if (file) {
+        if (!file.type.match('image.*')) {
+            showAuthMessage("Veuillez sélectionner une image valide", "error");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            preview.src = event.target.result;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+const dropZone = document.getElementById('drop-zone');
+
+dropZone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+});
+
+dropZone?.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+});
+
+dropZone?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.match('image.*')) {
+        document.getElementById('image-upload').files = e.dataTransfer.files;
+
+        const preview = document.getElementById('preview');
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            preview.src = event.target.result;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        showAuthMessage("Veuillez déposer une image valide", "error");
+    }
+});
+
+    </script>
+
+</body>
+
+</html>
