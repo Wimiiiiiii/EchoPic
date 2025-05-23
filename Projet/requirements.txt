@@ -1,0 +1,16 @@
+werkzeug
+torch
+torchvision
+wget
+unzip
+flask
+flask-login
+tensorflow
+scipy
+scikit-learn
+matplotlib
+pillow
+opencv-python
+numpy
+gunicorn
+python-dotenv
