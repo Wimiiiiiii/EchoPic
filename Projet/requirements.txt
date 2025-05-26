@@ -14,3 +14,4 @@ opencv-python
 numpy
 gunicorn
 python-dotenv
+gevent

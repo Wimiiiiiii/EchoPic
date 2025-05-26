@@ -52,13 +52,26 @@
                             
                             <div class="space-y-6">
                                 <div>
-                                    <label for="model" class="block text-sm font-medium text-gray-700">Modèle de recherche</label>
-                                    <select name="model" id="model" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                        <option value="ResNet50">ResNet50</option>
-                                        <option value="MobileNet">MobileNet</option>
-                                        <option value="VIT">Vision Transformer</option>
-                                        <option value="VGG16">VGG16</option>
-                                    </select>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Modèles de recherche</label>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="models" value="ResNet50" id="model-resnet" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                            <label for="model-resnet" class="ml-2 block text-sm text-gray-700">ResNet50</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="models" value="MobileNet" id="model-mobilenet" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                            <label for="model-mobilenet" class="ml-2 block text-sm text-gray-700">MobileNet</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="models" value="VIT" id="model-vit" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                            <label for="model-vit" class="ml-2 block text-sm text-gray-700">Vision Transformer</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="models" value="VGG16" id="model-vgg16" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                            <label for="model-vgg16" class="ml-2 block text-sm text-gray-700">VGG16</label>
+                                        </div>
+                                    </div>
+                                    <p class="mt-1 text-sm text-gray-500">Sélectionnez un ou plusieurs modèles</p>
                                 </div>
                                 
                                 <div>
@@ -139,6 +152,22 @@
                     // Déclencher l'événement change manuellement
                     const event = new Event('change');
                     fileInput.dispatchEvent(event);
+                }
+            });
+
+            // Validation du formulaire pour les modèles
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const selectedModels = document.querySelectorAll('input[name="models"]:checked');
+                if (selectedModels.length === 0) {
+                    e.preventDefault();
+                    alert('Veuillez sélectionner au moins un modèle');
+                    return;
+                }
+                if (selectedModels.length > 3) {
+                    e.preventDefault();
+                    alert('Vous ne pouvez sélectionner que 3 modèles maximum');
+                    return;
                 }
             });
         });

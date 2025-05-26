@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.secret_key = 'dev_secret_key_12345'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 app.config['LOAD_FOLDER'] = 'image.orig/'
-app.config['MAX_CONTENT_LENGTH'] = 3 * 1024 * 1024  # 3MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB max file size
 features_path = 'features/'
 
 # Create necessary directories if they don't exist
@@ -153,19 +153,62 @@ def search_interface():
     # avant de rendre le template. Pour l'instant, on le rend directement.
     return render_template('search.html')
 
+def combine_results(all_results, top_k):
+    """
+    Combine les résultats de plusieurs modèles en utilisant un système de vote pondéré.
+    
+    Args:
+        all_results: Liste de listes de résultats (chaque sous-liste contient les résultats d'un modèle)
+        top_k: Nombre de résultats à retourner
+    
+    Returns:
+        Liste des meilleurs résultats combinés
+    """
+    # Dictionnaire pour stocker les scores combinés
+    combined_scores = {}
+    
+    # Pour chaque modèle
+    for model_results in all_results:
+        # Pour chaque résultat du modèle
+        for idx, result in enumerate(model_results):
+            path = result['path']
+            score = result['score'] 
+            
+            if path in combined_scores:
+                combined_scores[path]['score'] += score
+                combined_scores[path]['count'] += 1
+            else:
+                combined_scores[path] = {'score': score, 'count': 1}
+    
+    # Normaliser les scores en fonction du nombre de modèles qui ont trouvé chaque image
+    final_results = []
+    for path, data in combined_scores.items():
+        normalized_score = data['score'] / data['count']
+        final_results.append({
+            'path': path,
+            'score': normalized_score,
+        })
+    
+    # Trier par score décroissant et retourner les top_k
+    final_results.sort(key=lambda x: x['score'])
+    return final_results[:top_k]
+
 @app.route('/search', methods=['POST'])
 def search():
     print("--- Début de la requête /search ---") # DEBUG
     print(f"Données du formulaire (request.form): {request.form}") # DEBUG
     print(f"Fichiers reçus (request.files): {request.files}") # DEBUG
-
-    top_k_str = request.form.get('top_k')
-    model_name = request.form.get('model')
-
-    if not top_k_str or not model_name:
-        flash(f"Paramètres manquants: top_k ('{top_k_str}') ou model ('{model_name}') non fournis par le formulaire.", 'error')
+    print("--- Début de la requête /search ---")
+    
+    # Récupération des modèles sélectionnés
+    selected_models = request.form.getlist('models')
+    if not selected_models:
+        flash("Veuillez sélectionner au moins un modèle.", 'error')
         return redirect(url_for('search_interface'))
     
+
+
+    top_k_str = request.form.get('top_k')
     try:
         top_k = int(top_k_str)
     except ValueError:
@@ -190,99 +233,77 @@ def search():
     
     # Construction de la clé pour la recherche dans le PKL
     # Clés PKL attendues : 'image.orig/nomfichier.jpg'
-    query_name_for_logic = os.path.join(app.config['LOAD_FOLDER'], filename_secure).replace('\\', '/')
-    print(f"DEBUG: Clé construite pour la recherche PKL (query_name_for_logic): {query_name_for_logic}") # DEBUG
+    filename_secure_with_path = os.path.join(app.config['LOAD_FOLDER'], filename_secure).replace('\\', '/')
+    print(f"DEBUG: Clé construite pour la recherche PKL (query_name): {filename_secure_with_path}") # DEBUG
+    all_model_results = []
 
+    
     try:
-        features_file_path = os.path.join(features_path, model_name + '.pkl')
-        print(f"DEBUG: Chemin du fichier PKL des caractéristiques: {features_file_path}") # DEBUG
-        if not os.path.exists(features_file_path):
-            flash(f"Le fichier de caractéristiques pour le modèle '{model_name}' est introuvable ici : {features_file_path}.", 'error')
-            return redirect(url_for('search_interface'))
-            
-        with open(features_file_path, 'rb') as f:
-            data_from_pkl = pickle.load(f)
-        print(f"DEBUG: Type de données chargées depuis PKL: {type(data_from_pkl)}") # DEBUG
-
-        if isinstance(data_from_pkl, list):
-            # Essayer de convertir en dictionnaire si c'est une liste de paires (clé, valeur)
-            try:
-                loaded_features = dict(data_from_pkl)
-                print(f"DEBUG: Données PKL (liste) converties en dictionnaire. Nombre d'entrées: {len(loaded_features)}")
-            except (TypeError, ValueError) as e:
-                flash(f"Le fichier PKL '{model_name}' ne contient pas une liste de paires clé-valeur valide. Erreur: {e}", 'error')
-                return redirect(url_for('search_interface'))
-        elif isinstance(data_from_pkl, dict):
-            loaded_features = data_from_pkl
-            print(f"DEBUG: Caractéristiques (dictionnaire) chargées pour le modèle '{model_name}'. Nombre d'entrées: {len(loaded_features)}")
-            if model_name == 'VIT' and loaded_features:
-                print(f"DEBUG: Quelques clés du PKL VIT (max 5): {list(loaded_features.keys())[:5]}")
-        else:
-            flash(f"Le format des données dans le fichier PKL '{model_name}' n'est pas reconnu (ni liste de paires, ni dictionnaire).", 'error')
-            return redirect(url_for('search_interface'))
-
         # Sauvegarde du fichier téléversé
         upload_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename_secure)
         file.save(upload_filepath)
         print(f"DEBUG: Fichier téléversé sauvegardé ici: {upload_filepath}") # DEBUG
-        
-        # Ajustement de la clé pour le modèle VIT
-        current_query_name_for_logic = query_name_for_logic
-        if model_name == 'VIT':
-            # Pour VIT, les clés sont juste le nom du fichier sans extension, ex: "1"
-            filename_without_ext = os.path.splitext(filename_secure)[0]
-            current_query_name_for_logic = filename_without_ext
-            print(f"DEBUG: Clé ajustée pour VIT: {current_query_name_for_logic}")
 
-        similar_items = getkVoisins(loaded_features, current_query_name_for_logic, top_k)
-        print(f"DEBUG: Voisins trouvés (top {top_k}): {similar_items}") # DEBUG
-        
-        similar_filenames_for_rp = [item[0] for item in similar_items]
+        for model_name in selected_models:
+            features_file_path = os.path.join(features_path, model_name + '.pkl')
+            if not os.path.exists(features_file_path):
+                flash(f"Le fichier de caractéristiques pour le modèle '{model_name}' est introuvable.", 'error')
+                continue
 
-        rp_file_generated_name = Compute_RP(top_k, filename_secure, similar_filenames_for_rp)
-        print(f"DEBUG: Fichier RP texte généré: {rp_file_generated_name}") # DEBUG
-        
-        rp_image_path_generated = Display_RP(rp_file_generated_name, model_name)
-        print(f"DEBUG: Image de la courbe RP générée: {rp_image_path_generated}") # DEBUG
-        
-        results = []
-        for item_key, distance in similar_items:
-            score = 1.0 / (1.0 + distance) if distance is not None and distance > -1 else 0 # distance peut etre 0
-            
-            # Construire le chemin d'affichage correctement
-            image_display_path = item_key # Par défaut pour les modèles non-VIT
+            with open(features_file_path, 'rb') as f:
+                loaded_features = pickle.load(f)
+                if isinstance(loaded_features, list):
+                    loaded_features = dict(loaded_features)
+           
+            # Ajustement de la clé pour le modèle VIT
+            query_name = filename_secure_with_path
             if model_name == 'VIT':
-                # Pour VIT, item_key est juste le nom (ex: "1"), reconstruire le chemin complet
-                # Supposons que les images originales pour VIT sont des .jpg
-                image_display_path = os.path.join(app.config['LOAD_FOLDER'], f"{item_key}.jpg").replace('\\', '/')
-                print(f"DEBUG: [VIT] Chemin d'affichage pour {item_key}: {image_display_path}")
+                query_name = os.path.splitext(filename_secure)[0]
+
+            similar_items = getkVoisins(loaded_features, query_name, top_k)
+           
+            # Préparation des résultats pour ce modèle
+            model_results = []
+            for item_key, distance in similar_items:
+                score = distance
+                
+                image_path = item_key
+                if model_name == 'VIT':
+                    image_path = os.path.join(app.config['LOAD_FOLDER'], f"{item_key}.jpg").replace('\\', '/')
+                
+                model_results.append({
+                    'path': image_path,
+                    'score': score
+                })
             
-            results.append({
-                'path': image_display_path, 
-                'score': score
-            })
+            all_model_results.append(model_results)
 
-        # Chemin pour afficher l'image téléversée, relatif à static/
-        query_image_display_path = os.path.join(os.path.basename(app.config['UPLOAD_FOLDER'].strip('/')), filename_secure).replace('\\', '/')
-        print(f"DEBUG: Chemin d'affichage pour l'image requête: {query_image_display_path}") # DEBUG
-        print("--- Fin de la requête /search (succès) ---")
+        # Combinaison des résultats de tous les modèles
+        combined_results = combine_results(all_model_results, top_k)
         
-        return render_template('results.html', 
-                             query_image=query_image_display_path, 
-                             results=results,
-                             model_name=model_name,
-                             top_k=top_k,
-                             rp_image=rp_image_path_generated)
+        # Chemin pour l'image requête
+        query_image_path = os.path.join(os.path.basename(app.config['UPLOAD_FOLDER'].strip('/')), filename_secure).replace('\\', '/')
+        
+        # Extraction des noms de fichiers pour la courbe RP
+        similar_filenames = [result['path'].split('/')[-1] for result in combined_results]
+        
+        # Génération de la courbe RP pour les résultats combinés
+        rp_file = Compute_RP(top_k, filename_secure, similar_filenames)
+        rp_image_path = Display_RP(rp_file, "Résultats combinés")
 
-    except ValueError as ve:
-        print(f"ERREUR (ValueError): {str(ve)}") # DEBUG
-        flash(f"Erreur de données: L'image '{query_name_for_logic}' ne correspond à aucune entrée connue pour le modèle '{model_name}'. Assurez-vous d'utiliser une image du dataset original. Détail: {str(ve)}", 'warning')
-        return redirect(url_for('search_interface'))
+        return render_template('results.html',
+                             model_name=selected_models,
+                             query_image=query_image_path,
+                             results=combined_results,
+                             models=selected_models,
+                             top_k=top_k,
+                             rp_curves= rp_image_path)
+
     except Exception as e:
-        print(f"ERREUR (Exception générale): {type(e).__name__} - {str(e)}") # DEBUG
+        print(f"ERREUR: {type(e).__name__} - {str(e)}")
         import traceback
-        traceback.print_exc() # Imprime la trace complète de l'erreur dans la console Flask
-        flash(f'Erreur inattendue ({type(e).__name__}) lors de la recherche. Consultez les logs du serveur pour plus de détails.', 'error')
+        traceback.print_exc()
+        flash(f'Erreur lors de la recherche: {str(e)}', 'error')
         return redirect(url_for('search_interface'))
 
 

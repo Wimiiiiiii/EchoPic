@@ -104,4 +104,33 @@ pip install -r requirements.txt
 3. Lancer l'application :
 ```bash
 python app/app.py
-``` 
+```
+
+Pour déployer l'application sur votre VM et la rendre accessible publiquement :
+
+1. Construire l'image Docker :
+```bash
+docker build -t echopic .
+```
+
+2. Lancer le conteneur :
+```bash
+docker run -d \
+  -p 5000:5000 \
+  --name echopic \
+  echopic
+```
+
+3. Accès à l'application :
+```bash
+http://<IP_DE_VOTRE_VM>:5000
+```
+
+Assurez-vous que :
+- Le port 5000 est ouvert dans le pare-feu de votre VM
+- Les règles de sécurité de votre cloud provider autorisent le trafic sur le port 5000
+
+4. Sécurité recommandée :
+- Envisagez d'utiliser HTTPS avec un reverse proxy (comme Nginx)
+- Configurez un domaine personnalisé si nécessaire
+- Mettez en place des limites de taux (rate limiting) pour protéger votre API 

@@ -1,18 +1,28 @@
-version: '3'
+version: '3.8'
 
 services:
-  web:
+  echopic:
     build: .
+    container_name: echopic-app
     ports:
       - "5000:5000"
     volumes:
-      - ./app:/app
-      - ./data:/data
-      - ./models:/app/models
+      - ./app/static/uploads:/app/static/uploads
+      - ./app/static/results:/app/static/results
+      - ./app/static/rp_curves:/app/static/rp_curves
+      - ./app/features:/app/features
+      - ./app/image.orig:/app/image.orig
     environment:
+      - FLASK_APP=app/app.py
       - FLASK_ENV=production
-      - FLASK_APP=app.py
+      - PYTHONUNBUFFERED=1
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Service supplémentaire : Redis pour le cache
   redis:
