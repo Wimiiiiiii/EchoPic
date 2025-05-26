@@ -1,136 +1,187 @@
-# Moteur de Recherche d'Images
+# EchoPic - Service de Recherche d'Images
 
-Ce projet est une application web permettant de rechercher des images similaires en utilisant différents modèles d'indexation (MobileNet, ResNet50, ViT) et différentes méthodes de calcul de similarité.
+## Description
+EchoPic est un service SaaS de recherche d'images par similarité, permettant de combiner plusieurs modèles de deep learning pour une recherche plus précise.
 
 ## Prérequis
-
 - Docker
 - Docker Compose
-- Python 3.8+
 - Git
+
+## Structure du Projet
+```
+EchoPic/
+├── app/
+│   ├── app.py
+│   └── templates/
+├── static/
+│   ├── css/
+│   ├── js/
+│   ├── images/
+│   ├── uploads/
+│   ├── rp_curves/
+│   └── image.orig/
+├── features/
+│   ├── ResNet50.pkl
+│   ├── MobileNet.pkl
+│   └── VIT.pkl
+├── postgres/
+│   └── init/
+│       └── 01-init.sql
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── .env
+```
 
 ## Installation
 
-1. Cloner le repository :
+1. **Cloner le repository**
 ```bash
-git clone <repository-url>
-cd <repository-name>
+git clone [URL_DU_REPO]
+cd EchoPic
 ```
 
-2. Créer les dossiers nécessaires :
+2. **Créer le fichier .env**
 ```bash
-mkdir -p app/static/uploads
-mkdir -p app/static/results
-mkdir -p data
-mkdir -p models
+# Créer un fichier .env à la racine du projet
+touch .env
 ```
 
-3. Copier les modèles pré-entraînés dans le dossier `models/`
+3. **Configurer les variables d'environnement**
+```env
 
-4. Lancer l'application avec Docker Compose :
-```bash
-docker-compose up --build
+FLASK_APP=app/app.py
+FLASK_ENV=development
+FLASK_SECRET_KEY=8f42a73054b1749f8f58848be5e6502c8c8d9c3c1b4e2a7f6d5c3b2a1e0f9d8c7b
+
+POSTGRES_HOST=localhost
+POSTGRES_USER=echopic_user
+POSTGRES_PASSWORD=echopic_password_secure
+POSTGRES_DB=echopic_db
+POSTGRES_PORT=5432
 ```
 
-L'application sera accessible à l'adresse : http://localhost:5000
+4. **Vérifier la structure des dossiers**
+```bash
+# Créer les dossiers nécessaires s'ils n'existent pas
+mkdir -p app/static/uploads app/static/rp_curves
+```
+
+## Déploiement avec Docker Compose
+
+1. **Construire les images**
+```bash
+docker-compose build
+```
+
+2. **Démarrer les services**
+```bash
+docker-compose up -d
+```
+
+3. **Vérifier l'état des services**
+```bash
+docker-compose ps
+```
+
+4. **Voir les logs**
+```bash
+# Tous les services
+docker-compose logs
+
+# Service web uniquement
+docker-compose logs web
+
+# Service base de données uniquement
+docker-compose logs db
+```
 
 ## Utilisation
 
-1. Connectez-vous avec les identifiants par défaut :
-   - Username: admin
-   - Password: admin
+1. **Accéder à l'application**
+- Interface web : http://localhost:5000
+- Interface de recherche : http://localhost:5000/search_interface
 
-2. Sur la page d'accueil :
-   - Sélectionnez une image à rechercher
-   - Choisissez un ou plusieurs modèles d'indexation
-   - Sélectionnez la méthode de calcul de similarité
-   - Cliquez sur "Rechercher"
+2. **Fonctionnalités disponibles**
+- Recherche d'images par similarité
+- Combinaison de plusieurs modèles (max 3)
+- Génération de courbes RP
+- Historique des recherches
 
-3. Les résultats afficheront :
-   - Les images les plus similaires
-   - Les métriques de performance (R, P, AP, MAP, R-Precision)
-   - La courbe de précision/rappel
+## Maintenance
 
-## Structure du Projet
-
+1. **Arrêter les services**
+```bash
+docker-compose down
 ```
-project/
-├── app/
-│   ├── static/
-│   │   ├── css/
-│   │   ├── js/
-│   │   └── images/
-│   ├── templates/
-│   │   ├── base.html
-│   │   ├── index.html
-│   │   └── login.html
-│   └── app.py
-├── data/
-├── models/
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
+
+2. **Redémarrer les services**
+```bash
+docker-compose restart
 ```
+
+3. **Reconstruire et redémarrer**
+```bash
+docker-compose up -d --build
+```
+
+4. **Nettoyer les volumes**
+```bash
+docker-compose down -v
+```
+
+## Débogage
+
+1. **Accéder au conteneur web**
+```bash
+docker-compose exec web /bin/bash
+```
+
+2. **Accéder à la base de données**
+```bash
+docker-compose exec db psql -U echopic_user -d echopic_db
+```
+
+3. **Vérifier les logs en temps réel**
+```bash
+docker-compose logs -f
+```
+
+## Volumes Docker
+- `./app:/app/app` : Code de l'application
+- `./static:/app/static` : Fichiers statiques
+- `./features:/app/features` : Fichiers de features
+- `./image.orig:/app/image.orig` : Images originales
+- `postgres_data:/var/lib/postgresql/data` : Données PostgreSQL
 
 ## Sécurité
+- Les mots de passe sont stockés dans le fichier .env
+- Le port 5432 (PostgreSQL) n'est pas exposé publiquement
+- Les uploads sont limités à 1MB par fichier
+- Les noms de fichiers sont sécurisés avant le stockage
 
-- L'application utilise Flask-Login pour l'authentification
-- Les mots de passe sont hashés
-- Les fichiers uploadés sont validés et sécurisés
-- Les routes sont protégées
+## Support
+Pour toute question ou problème, veuillez ouvrir une issue sur le repository.
 
-## Performance
+## Configuration HTTPS
 
-- Utilisation de Redis pour le cache
-- Optimisation des requêtes de recherche
-- Gestion efficace de la mémoire
+1. **Certificats SSL**
+- Les certificats sont stockés dans le dossier `certs/`
+- Pour le développement, un certificat auto-signé est utilisé
+- Pour la production, remplacez par un certificat valide (Let's Encrypt, etc.)
 
-## Développement
+2. **Accès à l'application**
+- HTTP : http://localhost:5000
+- HTTPS : https://localhost:5443
 
-Pour développer l'application localement :
-
-1. Créer un environnement virtuel :
+3. **Génération d'un nouveau certificat**
 ```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
+# Générer un nouveau certificat auto-signé
+openssl req -x509 -newkey rsa:4096 -nodes -out certs/cert.pem -keyout certs/key.pem -days 365 -subj "/CN=localhost"
 ```
 
-2. Installer les dépendances :
-```bash
-pip install -r requirements.txt
-```
-
-3. Lancer l'application :
-```bash
-python app/app.py
-```
-
-Pour déployer l'application sur votre VM et la rendre accessible publiquement :
-
-1. Construire l'image Docker :
-```bash
-docker build -t echopic .
-```
-
-2. Lancer le conteneur :
-```bash
-docker run -d \
-  -p 5000:5000 \
-  --name echopic \
-  echopic
-```
-
-3. Accès à l'application :
-```bash
-http://<IP_DE_VOTRE_VM>:5000
-```
-
-Assurez-vous que :
-- Le port 5000 est ouvert dans le pare-feu de votre VM
-- Les règles de sécurité de votre cloud provider autorisent le trafic sur le port 5000
-
-4. Sécurité recommandée :
-- Envisagez d'utiliser HTTPS avec un reverse proxy (comme Nginx)
-- Configurez un domaine personnalisé si nécessaire
-- Mettez en place des limites de taux (rate limiting) pour protéger votre API 
+4. **Sécurité**
+- Le certificat auto-signé générera un avertissement dans le navigateur
+- En production, utilisez un certificat valide
+- Les certificats sont montés en volume dans le conteneur 

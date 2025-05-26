@@ -1,37 +1,37 @@
-version: '3.8'
+version: "3"
 
 services:
-  echopic:
+  web:
     build: .
-    container_name: echopic-app
     ports:
-      - "5000:5000"
+      - "5443:5443"  
     volumes:
-      - ./app/static/uploads:/app/static/uploads
-      - ./app/static/results:/app/static/results
-      - ./app/static/rp_curves:/app/static/rp_curves
+      - ./app:/app/app
+      - ./app/static:/app/static
       - ./app/features:/app/features
-      - ./app/image.orig:/app/image.orig
+      - ./app/certs:/app/certs
+    env_file:
+      - .env
     environment:
-      - FLASK_APP=app/app.py
-      - FLASK_ENV=production
-      - PYTHONUNBUFFERED=1
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - POSTGRES_HOST=db
+    networks:
+      - echopic_network
+    depends_on:
+      - db
 
-  # Service supplémentaire : Redis pour le cache
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
+  db:
+    image: postgres:15
+    restart: always
+    env_file:
+      - .env
     volumes:
-      - redis_data:/data
-    restart: unless-stopped
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - echopic_network
+
+networks:
+  echopic_network:
 
 volumes:
-  redis_data: 
+  postgres_data: 
