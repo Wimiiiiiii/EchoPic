@@ -26,6 +26,7 @@ app.config['FLASK_APP'] = 'app.py'
 features_path = 'features/'
 
 # Configuration SSL
+# Configuration SSL
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain('certs/cert.pem', 'certs/key.pem')
 
@@ -312,5 +313,6 @@ if __name__ == '__main__':
         port=5443,
         debug=False,
         ssl_context=ssl_context
+      
     ) 
     

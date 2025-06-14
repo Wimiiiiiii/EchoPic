@@ -14,8 +14,7 @@ COPY . /app/
 # Installation des dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Exposition des ports (HTTP et HTTPS)
-EXPOSE 5000
+
 EXPOSE 5443
 
 # Commande pour démarrer l'application

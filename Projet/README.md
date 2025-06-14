@@ -100,14 +100,13 @@ docker-compose logs db
 ## Utilisation
 
 1. **Accéder à l'application**
-- Interface web : http://localhost:5000
-- Interface de recherche : http://localhost:5000/search_interface
+- Interface web : https://163.172.234.100:5443
 
 2. **Fonctionnalités disponibles**
 - Recherche d'images par similarité
 - Combinaison de plusieurs modèles (max 3)
 - Génération de courbes RP
-- Historique des recherches
+
 
 ## Maintenance
 
@@ -118,7 +117,7 @@ docker-compose down
 
 2. **Redémarrer les services**
 ```bash
-docker-compose restart
+docker-compose restart #SERVICE
 ```
 
 3. **Reconstruire et redémarrer**
@@ -128,8 +127,9 @@ docker-compose up -d --build
 
 4. **Nettoyer les volumes**
 ```bash
-docker-compose down -v
+docker system prune -a --volumes
 ```
+
 
 ## Débogage
 
@@ -150,9 +150,9 @@ docker-compose logs -f
 
 ## Volumes Docker
 - `./app:/app/app` : Code de l'application
-- `./static:/app/static` : Fichiers statiques
-- `./features:/app/features` : Fichiers de features
-- `./image.orig:/app/image.orig` : Images originales
+- `./app/static:/app/static` : Fichiers statiques
+- `./app/features:/app/features` : Fichiers de features
+- `./app/static/image.orig:/app/image.orig` : Images originales
 - `postgres_data:/var/lib/postgresql/data` : Données PostgreSQL
 
 ## Sécurité
@@ -169,19 +169,14 @@ Pour toute question ou problème, veuillez ouvrir une issue sur le repository.
 1. **Certificats SSL**
 - Les certificats sont stockés dans le dossier `certs/`
 - Pour le développement, un certificat auto-signé est utilisé
-- Pour la production, remplacez par un certificat valide (Let's Encrypt, etc.)
 
-2. **Accès à l'application**
-- HTTP : http://localhost:5000
-- HTTPS : https://localhost:5443
-
-3. **Génération d'un nouveau certificat**
+2. **Génération d'un nouveau certificat**
 ```bash
 # Générer un nouveau certificat auto-signé
 openssl req -x509 -newkey rsa:4096 -nodes -out certs/cert.pem -keyout certs/key.pem -days 365 -subj "/CN=localhost"
 ```
 
-4. **Sécurité**
+43 **Sécurité**
 - Le certificat auto-signé générera un avertissement dans le navigateur
 - En production, utilisez un certificat valide
 - Les certificats sont montés en volume dans le conteneur 
