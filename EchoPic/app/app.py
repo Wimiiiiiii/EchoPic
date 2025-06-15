@@ -26,7 +26,6 @@ app.config['FLASK_APP'] = 'app.py'
 features_path = 'features/'
 
 # Configuration SSL
-# Configuration SSL
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain('certs/cert.pem', 'certs/key.pem')
 
@@ -226,6 +225,14 @@ def search():
 
     if not file or file.filename == '':
         flash('Aucun fichier image n\'a ete selectionne dans le formulaire.', 'error')
+        return redirect(url_for('search_interface'))
+    
+    if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        flash('Le fichier image doit etre une image valide (PNG, JPG ou JPEG).', 'error')
+        return redirect(url_for('search_interface'))
+   
+    if file.content_length > app.config['MAX_CONTENT_LENGTH']:
+        flash('La taille du fichier image est trop grande.', 'error')
         return redirect(url_for('search_interface'))
 
     filename_secure = secure_filename(file.filename)
